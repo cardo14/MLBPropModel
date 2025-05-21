@@ -462,7 +462,7 @@ if __name__ == "__main__":
 
         print(f"RESULTS for player: {group['full_name'].iloc[0]}")
 
-        if stat_name == 'batter_walks':
+        if stat_name == 'walks':
             print("\nWalks Analysis:")
             print(
                 f"Point Prediction: {analysis['point_prediction']:.2f} walks")
