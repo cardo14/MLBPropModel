@@ -1,0 +1,22 @@
+2025-05-10 16:01:58,313 - numexpr.utils - INFO - Note: NumExpr detected 12 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+2025-05-10 16:01:58,314 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-05-10 16:02:55,852 - numexpr.utils - INFO - Note: NumExpr detected 12 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+2025-05-10 16:02:55,852 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-05-10 16:03:05,884 - mlb_prop_betting - INFO - Tables reset successfully!
+2025-05-10 16:03:05,884 - mlb_prop_betting - INFO - Importing example dataframe into database...
+2025-05-10 16:03:05,884 - mlb_prop_betting - INFO - Reading dataframe from /Users/om/Desktop/mlb_prop/data/Example_Dataframe_May_5
+2025-05-10 16:03:05,945 - mlb_prop_betting - ERROR - Error importing dataframe: invalid literal for int() with base 10: 'game_id'
+2025-05-10 16:08:41,891 - numexpr.utils - INFO - Note: NumExpr detected 12 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+2025-05-10 16:08:41,893 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-05-10 16:16:36,886 - numexpr.utils - INFO - Note: NumExpr detected 12 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+2025-05-10 16:16:36,887 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-05-10 16:16:59,253 - mlb_prop_betting - INFO - Tables reset successfully!
+2025-05-10 16:16:59,253 - mlb_prop_betting - INFO - Importing example dataframe into database...
+2025-05-10 16:16:59,254 - mlb_prop_betting - INFO - Reading dataframe from /Users/om/Desktop/mlb_prop/data/Example_Dataframe_May_5
+2025-05-10 16:17:01,557 - mlb_prop_betting - INFO - Import completed successfully!
+2025-05-10 16:17:01,557 - mlb_prop_betting - INFO - Added 576 records to teams table
+2025-05-10 16:17:01,557 - mlb_prop_betting - INFO - Added 4974 records to players table
+2025-05-10 16:17:01,557 - mlb_prop_betting - INFO - Added 288 records to games table
+2025-05-10 16:17:01,557 - mlb_prop_betting - INFO - Added 5 records to prop_types table
+2025-05-10 16:17:01,557 - mlb_prop_betting - INFO - Added 1 records to sportsbooks table
+2025-05-10 16:17:01,557 - mlb_prop_betting - INFO - Added 2487 records to odds table
