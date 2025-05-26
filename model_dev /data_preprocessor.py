@@ -76,6 +76,11 @@ def load_mlb_data():
                 hist_ks_last_10 = historical_data.iloc[-10:]['batting_strikeouts'].sum() / min(
                     10, len(historical_data))
 
+                # Batting order metrics
+                bo = current_game['batting_battingOrder']
+                bo = bo // 100
+                is_pinch_hitter = bo % 100 == 1
+
                 # Get pitcher data for current game
                 pitcher_id = current_game['pitching_id'].values[0]
 
@@ -143,6 +148,10 @@ def load_mlb_data():
                     'hist_walk_rate': hist_walk_rate,
                     'hist_walks_last_10': hist_walks_last_10,
 
+                    # BATTING ORDER STATS
+                    'batting_position': bo,
+                    'pinch_status': is_pinch_hitter,
+
                     # STRIKEOUTS-SPECIFIC PLAYER STATS
                     'hist_strikeouts_per_game': hist_strikeouts,
                     'hist_k_rate': hist_k_rate,
@@ -203,6 +212,9 @@ def enhanced_preprocess_data(df, target_col, feature_engineering=True, apply_pca
             # Walk-specific player stats
             'hist_walks_per_game', 'hist_walk_rate', 'hist_walks_last_10',
 
+            # Batting order stats
+            'batting_position', 'pinch_status',
+
             # Game context
             'is_home_game', 'venue_is_dome', 'temperature',
 
@@ -224,6 +236,9 @@ def enhanced_preprocess_data(df, target_col, feature_engineering=True, apply_pca
             # Game context
             'is_home_game', 'venue_is_dome', 'temperature',
 
+            # Batting order stats
+            'batting_position', 'pinch_status',
+
             # Basic pitcher stats
             'pitcher_hist_era', 'pitcher_hist_whip',
 
@@ -234,7 +249,7 @@ def enhanced_preprocess_data(df, target_col, feature_engineering=True, apply_pca
 
     # Add categorical features if available
     categorical_features = []
-    for col in ['venue']:
+    for col in ['venue', 'batting_position']:
         if col in df.columns:
             categorical_features.append(col)
 
