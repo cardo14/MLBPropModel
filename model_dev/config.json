@@ -1,0 +1,24 @@
+{
+    "model_settings": {
+        "random_state": 42,
+        "test_size": 0.25,
+        "cv_folds": 5
+    },
+    "data_settings": {
+        "min_games_threshold": 10,
+        "lookback_window": 20
+    },
+    "xgboost_params": {
+        "n_estimators": 100,
+        "max_depth": 6,
+        "learning_rate": 0.1
+    },
+    "random_forest_params": {
+        "n_estimators": 100,
+        "max_depth": 10,
+        "min_samples_split": 5
+    },
+    "pca_settings": {
+        "n_components": 0.95
+    }
+} 
