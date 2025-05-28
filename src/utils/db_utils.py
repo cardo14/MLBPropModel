@@ -1,8 +1,12 @@
 import psycopg2
 import logging
 
-# Import logger from the local config module
-from utils.config import logger
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger('db_utils')
 
 def connect_to_db(config):
     """Connect to the PostgreSQL database server"""
@@ -46,8 +50,13 @@ def reset_tables(config):
                 team_id INTEGER PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
                 abbreviation VARCHAR(50),
-                league VARCHAR(50),
-                division VARCHAR(50),
+                team_code VARCHAR(50),
+                league_id INTEGER,
+                league_name VARCHAR(100),
+                division_id INTEGER,
+                division_name VARCHAR(100),
+                venue_id INTEGER,
+                venue_name VARCHAR(100),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -59,7 +68,10 @@ def reset_tables(config):
                 team_id INTEGER REFERENCES teams(team_id),
                 first_name VARCHAR(100),
                 last_name VARCHAR(100),
+                full_name VARCHAR(200),
                 position VARCHAR(50),
+                position_name VARCHAR(100),
+                position_type VARCHAR(100),
                 jersey_number VARCHAR(20),
                 bats VARCHAR(20),
                 throws VARCHAR(20),
@@ -72,20 +84,28 @@ def reset_tables(config):
             CREATE TABLE player_batting_stats (
                 id SERIAL PRIMARY KEY,
                 player_id INTEGER REFERENCES players(player_id),
+                first_name VARCHAR(100),
+                last_name VARCHAR(100),
                 date DATE,
+                season INTEGER,
+                games INTEGER,
                 at_bats INTEGER,
                 hits INTEGER,
+                runs INTEGER,
                 doubles INTEGER,
                 triples INTEGER,
                 home_runs INTEGER,
-                rbis INTEGER,
-                walks INTEGER,
+                rbi INTEGER,
+                stolen_bases INTEGER,
+                caught_stealing INTEGER,
+                base_on_balls INTEGER,
                 strikeouts INTEGER,
-                batting_avg FLOAT,
-                on_base_pct FLOAT,
-                slugging_pct FLOAT,
+                batting_average FLOAT,
+                on_base_percentage FLOAT,
+                slugging_percentage FLOAT,
                 ops FLOAT,
                 stat_period VARCHAR(20),
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(player_id, date, stat_period)
             )
         """)
@@ -95,16 +115,25 @@ def reset_tables(config):
             CREATE TABLE player_pitching_stats (
                 id SERIAL PRIMARY KEY,
                 player_id INTEGER REFERENCES players(player_id),
+                first_name VARCHAR(100),
+                last_name VARCHAR(100),
                 date DATE,
+                season INTEGER,
+                wins INTEGER,
+                losses INTEGER,
+                games INTEGER,
+                games_started INTEGER,
+                saves INTEGER,
                 innings_pitched FLOAT,
                 hits_allowed INTEGER,
                 runs_allowed INTEGER,
                 earned_runs INTEGER,
-                walks INTEGER,
+                walks_allowed INTEGER,
                 strikeouts INTEGER,
                 era FLOAT,
                 whip FLOAT,
                 stat_period VARCHAR(20),
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(player_id, date, stat_period)
             )
         """)
@@ -209,6 +238,22 @@ def reset_tables(config):
                    VALUES (%s, %s, %s)""",
                 book
             )
+        
+        # Create view for player batting stats with names
+        cur.execute("""
+            CREATE OR REPLACE VIEW view_player_batting_stats_with_names AS
+            SELECT s.*, p.first_name, p.last_name, p.full_name
+            FROM player_batting_stats s
+            JOIN players p ON s.player_id = p.player_id;
+        """)
+
+        # Create view for player pitching stats with names
+        cur.execute("""
+            CREATE OR REPLACE VIEW view_player_pitching_stats_with_names AS
+            SELECT s.*, p.first_name, p.last_name, p.full_name
+            FROM player_pitching_stats s
+            JOIN players p ON s.player_id = p.player_id;
+        """)
         
         conn.commit()
         logger.info("Tables reset successfully!")
