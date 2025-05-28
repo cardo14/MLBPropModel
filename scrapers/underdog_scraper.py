@@ -1,155 +1,114 @@
-#!/usr/bin/env python3
-"""
-Underdog Scraper for MLB Prop Betting Lines
-Scrapes prop betting lines for walks and strikeouts from Underdog Fantasy
-"""
-
 import requests
-import json
 import pandas as pd
-import time
-from datetime import datetime, date
+import json
 import os
-import sys
+from datetime import datetime
+
 
 class UnderdogScraper:
     def __init__(self):
-        self.base_url = "https://api.underdognetwork.com"
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
+        self.config = None
+        self.underdog_props = None
+
+        self.load_config()
+
+    def load_config(self):
+        with open(
+            os.path.join(os.path.dirname(__file__), "config.json"),
+            encoding="utf-8-sig",
+        ) as json_file:
+            self.config = json.load(json_file)
+
+    def fetch_data(self):
+        ud_pickem_response = requests.get(
+            self.config["ud_pickem_url"], headers=self.config["headers"])
+
+        if ud_pickem_response.status_code != 200:
+            raise Exception("Request failed")
+
+        pickem_data = json.loads(ud_pickem_response.text)
+
+        return pickem_data
+
+    def combine_data(self, pickem_data):
+        players = pd.DataFrame(pickem_data["players"])
+        appearances = pd.DataFrame(pickem_data["appearances"])
+        # games = pd.DataFrame(pickem_data["games"])
+        over_under_lines = pd.DataFrame(pickem_data["over_under_lines"])
+
+        return players, appearances, over_under_lines
+
+    def apply_name_corrections(self, df):
+        name_corrections = {
+            # ... If you're working with other data sets use this dictionary match names
         }
-        self.session = requests.Session()
-        self.session.headers.update(self.headers)
-    
-    def get_mlb_games(self, date_str=None):
-        """Get MLB games for a specific date"""
-        if date_str is None:
-            date_str = date.today().strftime('%Y-%m-%d')
-        
-        try:
-            # This is a placeholder URL - actual API endpoints would need to be determined
-            url = f"{self.base_url}/v1/games?sport=MLB&date={date_str}"
-            response = self.session.get(url)
-            
-            if response.status_code == 200:
-                return response.json()
-            else:
-                print(f"Error fetching games: {response.status_code}")
-                return None
-                
-        except Exception as e:
-            print(f"Error in get_mlb_games: {e}")
-            return None
-    
-    def get_player_props(self, game_id):
-        """Get player props for a specific game"""
-        try:
-            # This is a placeholder URL - actual API endpoints would need to be determined
-            url = f"{self.base_url}/v1/games/{game_id}/props"
-            response = self.session.get(url)
-            
-            if response.status_code == 200:
-                return response.json()
-            else:
-                print(f"Error fetching props: {response.status_code}")
-                return None
-                
-        except Exception as e:
-            print(f"Error in get_player_props: {e}")
-            return None
-    
-    def extract_walks_strikeouts_props(self, props_data):
-        """Extract walks and strikeouts props from the props data"""
-        walks_props = []
-        strikeouts_props = []
-        
-        if not props_data:
-            return walks_props, strikeouts_props
-        
-        # This would need to be adapted based on actual API response structure
-        for prop in props_data.get('props', []):
-            if 'walk' in prop.get('name', '').lower():
-                walks_props.append({
-                    'player_id': prop.get('player_id'),
-                    'player_name': prop.get('player_name'),
-                    'line': prop.get('line'),
-                    'over_odds': prop.get('over_odds'),
-                    'under_odds': prop.get('under_odds'),
-                    'stat_type': 'walks'
-                })
-            elif 'strikeout' in prop.get('name', '').lower():
-                strikeouts_props.append({
-                    'player_id': prop.get('player_id'),
-                    'player_name': prop.get('player_name'),
-                    'line': prop.get('line'),
-                    'over_odds': prop.get('over_odds'),
-                    'under_odds': prop.get('under_odds'),
-                    'stat_type': 'strikeouts'
-                })
-        
-        return walks_props, strikeouts_props
-    
-    def scrape_daily_props(self, date_str=None):
-        """Scrape all MLB props for a given date"""
-        print(f"Scraping props for date: {date_str or 'today'}")
-        
-        # Get games for the date
-        games = self.get_mlb_games(date_str)
-        if not games:
-            print("No games found")
-            return pd.DataFrame()
-        
-        all_props = []
-        
-        # For each game, get the props
-        for game in games.get('games', []):
-            game_id = game.get('id')
-            if game_id:
-                print(f"Fetching props for game {game_id}")
-                props = self.get_player_props(game_id)
-                
-                if props:
-                    walks_props, strikeouts_props = self.extract_walks_strikeouts_props(props)
-                    all_props.extend(walks_props + strikeouts_props)
-                
-                # Rate limiting
-                time.sleep(1)
-        
-        # Convert to DataFrame
-        if all_props:
-            df = pd.DataFrame(all_props)
-            df['scraped_at'] = datetime.now()
-            df['game_date'] = date_str or date.today().strftime('%Y-%m-%d')
-            return df
-        else:
-            return pd.DataFrame()
-    
-    def save_props_to_csv(self, df, filename=None):
-        """Save props data to CSV file"""
-        if filename is None:
-            date_str = date.today().strftime('%Y%m%d')
-            filename = f"underdog_props_{date_str}.csv"
-        
-        filepath = os.path.join(os.path.dirname(__file__), 'data', filename)
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        
-        df.to_csv(filepath, index=False)
-        print(f"Props saved to {filepath}")
+        df["full_name"] = df["full_name"].map(
+            name_corrections).fillna(df["full_name"])
+        return df
 
-def main():
-    """Main function to run the scraper"""
-    scraper = UnderdogScraper()
-    
-    # Scrape today's props
-    props_df = scraper.scrape_daily_props()
-    
-    if not props_df.empty:
-        print(f"Scraped {len(props_df)} props")
-        scraper.save_props_to_csv(props_df)
-    else:
-        print("No props found")
+    def process_data(self, players, appearances, over_under_lines):
+        players = players.rename(columns={"id": "player_id"})
+        appearances = appearances.rename(columns={"id": "appearance_id"})
 
-if __name__ == "__main__":
-    main() 
+        player_appearances = players.merge(
+            appearances, on=["player_id", "position_id", "team_id"], how="left")
+
+        over_under_lines = over_under_lines.reset_index(drop=True)
+        over_under_lines_expanded = over_under_lines.explode("options")
+
+        options_df = pd.json_normalize(over_under_lines_expanded["options"])
+
+        over_under_lines_expanded = pd.concat([over_under_lines_expanded.drop("options", axis=1).reset_index(drop=True),
+                                               options_df.reset_index(drop=True)], axis=1)
+
+        over_under_lines_expanded["appearance_id"] = over_under_lines_expanded["over_under"].apply(
+            lambda x: x["appearance_stat"]["appearance_id"])
+        over_under_lines_expanded["stat_name"] = over_under_lines_expanded["over_under"].apply(
+            lambda x: x["appearance_stat"]["stat"])
+
+        columns_to_remove = ['expires_at', 'live_event', 'live_event_stat']
+        over_under_lines_expanded = over_under_lines_expanded.drop(
+            columns=columns_to_remove, errors='ignore')
+
+        over_under_lines_expanded["choice"] = over_under_lines_expanded["choice"].map(
+            {"lower": "under", "higher": "over"}).fillna(over_under_lines_expanded["choice"])
+
+        underdog_props = player_appearances.merge(
+            over_under_lines_expanded, on="appearance_id", how="left", suffixes=("", "_over_under"))
+        underdog_props["full_name"] = underdog_props["first_name"] + \
+            " " + underdog_props["last_name"]
+
+        underdog_props = self.apply_name_corrections(underdog_props)
+
+        return underdog_props
+
+    def filter_data(self, df):
+        # df = df[df["sport_id"].isin(["MLB"])]
+        df = df[df["status"] != "suspended"]
+
+        columns_to_remove = ['country', 'image_url', 'badges', 'lineup_status_id',
+                             'match_id', 'match_type', 'over_under', 'rank', 'status']
+        df = df.drop(columns=columns_to_remove, errors='ignore')
+        df = df.reset_index(drop=True)
+
+        return df
+
+    def scrape(self):
+        all_pickem_data = self.fetch_data()
+        players, appearances, over_under_lines = self.combine_data(
+            all_pickem_data)
+        processed_props = self.process_data(
+            players, appearances, over_under_lines)
+        self.underdog_props = self.filter_data(processed_props)
+
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"/Users/leonardocardozo/Python/Sports_Betting_Project/underdog_scraper.py_{timestamp}.csv"
+        self.underdog_props.to_csv(filename, index=False)
+        print("Data saved to underdog_props.csv")
+
+        return self.underdog_props
+
+
+# Usage example:
+scraper = UnderdogScraper()
+scraper.scrape()

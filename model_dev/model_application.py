@@ -1,16 +1,23 @@
 # Model Application for MLB Prop Betting
 # This script applies trained models to make predictions and find value bets
-
-from base_model import simulate_predictions, calculate_over_under_probs, calculate_ev, find_value_bets
-from data_preprocessor import load_mlb_data
-from underdog_scraper import UnderdogScraper
-import pandas as pd
-import statsapi
-import numpy as np
-import matplotlib.pyplot as plt
-import joblib
-import os
 import sys
+import os
+import joblib
+import matplotlib.pyplot as plt
+import numpy as np
+import statsapi
+import pandas as pd
+from data_preprocessor import load_mlb_data
+from base_model import simulate_predictions, calculate_over_under_probs, calculate_ev, find_value_bets
+from underdog_scraper import UnderdogScraper
+original_sys_path = sys.path.copy()  # Save a copy of the original
+
+sys.path.append(os.path.abspath(os.path.join(
+    os.path.dirname(__file__), '..', 'scrapers')))
+
+
+sys.path = original_sys_path
+
 
 # Add the model dev directory to the Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
