@@ -149,7 +149,7 @@ def load_mlb_data():
                     'hist_walks_last_10': hist_walks_last_10,
 
                     # BATTING ORDER STATS
-                    'batting_position': bo,
+                    'batting_position': int(bo.values[0]),
                     'pinch_status': is_pinch_hitter,
 
                     # STRIKEOUTS-SPECIFIC PLAYER STATS
@@ -254,7 +254,7 @@ def enhanced_preprocess_data(df, target_col, feature_engineering=True, apply_pca
             categorical_features.append(col)
 
     # Combine features
-    all_features = features + categorical_features
+    all_features = list(dict.fromkeys(features + categorical_features))
 
     # Check if all features exist in the dataframe
     existing_features = [f for f in all_features if f in df.columns]
@@ -273,9 +273,8 @@ def enhanced_preprocess_data(df, target_col, feature_engineering=True, apply_pca
 
     print(f"Training data size: {len(X_train)}, Test data size: {len(X_test)}")
 
-    # Create preprocessing pipeline
     numeric_features = [
-        f for f in existing_features if f not in categorical_features]
+        f for f in all_features if f not in categorical_features]
 
     # Define transformers
     numeric_transformer = StandardScaler()
@@ -344,6 +343,7 @@ print("Loading MLB data for modeling...")
 
 # Load data from MLB_Data file
 mlb_data = load_mlb_data()
+
 
 # If data loading fails, create sample data as fallback
 if mlb_data is None or mlb_data.empty:

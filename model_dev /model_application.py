@@ -26,11 +26,15 @@ def load_betting_info():
     """Load betting data from Underdog."""
     scraper = UnderdogScraper()
     underdog_projections = scraper.scrape()
+    print(underdog_projections.head())
     underdog_projections = underdog_projections[underdog_projections['sport_id'] == 'MLB']
+    print(underdog_projections.head())
     underdog_projections = underdog_projections[underdog_projections['stat_name'].isin(
         ['batter_strikeouts', 'walks'])]
+    print(underdog_projections.head())
     underdog_projections = underdog_projections[['sport_id', 'stat_name', 'stat_value',
                                                  'full_name', 'last_name', 'american_price', 'decimal_price', 'choice', 'payout_multiplier']]
+    print(underdog_projections.head())
     return underdog_projections
 
 
@@ -57,11 +61,12 @@ def join_on_full_name(betting_df, mlb_data):
     """Join betting_df and mlb_data on normalized full names."""
     betting_df = betting_df.copy()
     mlb_data = mlb_data.copy()
-
+    print(betting_df.head())
     betting_df['player_id'] = betting_df['full_name'].apply(
         get_player_ids_by_name)
 
-    # print(betting_df.head())
+    print(betting_df.head())
+    print(mlb_data.head())
 
     joined_df = pd.merge(betting_df, mlb_data, on='player_id',
                          how='inner', suffixes=('_betting', '_mlb'))
@@ -406,6 +411,7 @@ if __name__ == "__main__":
         'hist_batting_avg', 'hist_obp', 'games_played',
         'hist_walks_per_game', 'hist_walk_rate', 'hist_walks_last_10',
         'hist_strikeouts_per_game', 'hist_k_rate', 'hist_ks_last_10',
+        'batting_position', 'pinch_status',
         'pitcher_id', 'pitcher_hist_era', 'pitcher_hist_whip',
         'pitcher_hist_k_per_9', 'pitcher_hist_k_rate', 'pitcher_recent_k_per_9',
         'pitcher_hist_bb_per_9', 'pitcher_hist_bb_rate', 'pitcher_recent_bb_per_9',
