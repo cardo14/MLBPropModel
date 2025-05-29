@@ -2,15 +2,15 @@ MLB PROP BETTING MODEL PERFORMANCE SUMMARY
 ==================================================
 
 WALKS MODELS:
-Random Forest Standard: RMSE = 0.4310
-XGBoost Standard: RMSE = 0.4281
-Random Forest PCA: RMSE = 0.4362
-XGBoost PCA: RMSE = 0.4318
-Best Walks Model: XGB Standard
+Random Forest Standard: RMSE = 0.4338
+XGBoost Standard: RMSE = 0.4346
+Random Forest PCA: RMSE = 0.4372
+XGBoost PCA: RMSE = 0.4354
+Best Walks Model: RF Standard
 
 STRIKEOUTS MODELS:
-Random Forest Standard: RMSE = 0.4970
-XGBoost Standard: RMSE = 0.5047
-Random Forest PCA: RMSE = 0.4949
-XGBoost PCA: RMSE = 0.5002
-Best Strikeouts Model: RF PCA
+Random Forest Standard: RMSE = 0.4901
+XGBoost Standard: RMSE = 0.4889
+Random Forest PCA: RMSE = 0.4891
+XGBoost PCA: RMSE = 0.4951
+Best Strikeouts Model: XGB Standard
