@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import joblib
 import os
 import sys
+from datetime import datetime
+
 
 # Add the model dev directory to the Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -26,15 +28,10 @@ def load_betting_info():
     """Load betting data from Underdog."""
     scraper = UnderdogScraper()
     underdog_projections = scraper.scrape()
-    print(underdog_projections.head())
-    underdog_projections = underdog_projections[underdog_projections['sport_id'] == 'MLB']
-    print(underdog_projections.head())
     underdog_projections = underdog_projections[underdog_projections['stat_name'].isin(
         ['batter_strikeouts', 'walks'])]
-    print(underdog_projections.head())
     underdog_projections = underdog_projections[['sport_id', 'stat_name', 'stat_value',
                                                  'full_name', 'last_name', 'american_price', 'decimal_price', 'choice', 'payout_multiplier']]
-    print(underdog_projections.head())
     return underdog_projections
 
 
@@ -61,12 +58,8 @@ def join_on_full_name(betting_df, mlb_data):
     """Join betting_df and mlb_data on normalized full names."""
     betting_df = betting_df.copy()
     mlb_data = mlb_data.copy()
-    print(betting_df.head())
     betting_df['player_id'] = betting_df['full_name'].apply(
         get_player_ids_by_name)
-
-    print(betting_df.head())
-    print(mlb_data.head())
 
     joined_df = pd.merge(betting_df, mlb_data, on='player_id',
                          how='inner', suffixes=('_betting', '_mlb'))
@@ -418,88 +411,75 @@ if __name__ == "__main__":
         'pitcher_hist_k_bb_ratio', 'venue', 'venue_is_dome', 'is_home_game', 'temperature'
     ]
 
-    # Group by player and stat_name
-    for (player_id, stat_name), group in prop_analysis_df.groupby(['player_id', 'stat_name']):
+  # ------------------------------------------------------------------
+#  Collect every value‑bet we find into a list of dicts
+# ------------------------------------------------------------------
+value_bets_records = []
 
-        # Use one row (they all share the same features) to get example_input
-        row = group.iloc[0]
-        example_input = pd.DataFrame(row[columns_to_select])
+# Group by player and stat_name
+for (player_id, stat_name), group in prop_analysis_df.groupby(['player_id', 'stat_name']):
+    # Use one row (they all share the same features) to get example_input
+    row = group.iloc[0]
+    example_input = pd.DataFrame(row[columns_to_select])
 
-        # Determine the target based on stat_name
-        if stat_name == 'batter_strikeouts':
-            target = 'ks'
-            model_type = best_ks_model
-            use_pca_flag = use_pca_ks
-        elif stat_name == 'walks':
-            target = 'walks'
-            model_type = best_walks_model
-            use_pca_flag = use_pca_walks
-        else:
-            continue
-        # Collect lines and odds
-        lines = list(dict.fromkeys(group['stat_value'].astype(float)))
-        over_odds = group[group['choice'] ==
-                          'over']['american_price'].astype(int).tolist()
-        under_odds = group[group['choice'] ==
-                           'under']['american_price'].astype(int).tolist()
+    # Determine the target & model
+    if stat_name == 'batter_strikeouts':
+        target, model_type, use_pca_flag = 'ks', best_ks_model, use_pca_ks
+    elif stat_name == 'walks':
+        target, model_type, use_pca_flag = 'walks', best_walks_model, use_pca_walks
+    else:
+        continue
 
-        # print(f"example_input: {example_input}")
-        # print(f"target: {target}")
-        # print(f"lines: {lines}")
-        # print(f"over_odds: {over_odds}")
-        # print(f"under_odds: {under_odds}")
+    # Collect lines & odds
+    lines = list(dict.fromkeys(group['stat_value'].astype(float)))
+    over_odds = group.loc[group['choice'] == 'over',
+                          'american_price'].astype(int).tolist()
+    under_odds = group.loc[group['choice'] == 'under',
+                           'american_price'].astype(int).tolist()
 
-        # In case only one sided odds, just assume a no-vig line (we can make this better later)
-        if not over_odds:
-            over_odds = [-under_odds[0]]
-        if not under_odds:
-            under_odds = [-over_odds[0]]
+    # If only one‑sided odds, assume opposite side is −x (no‑vig stand‑in)
+    if not over_odds:
+        over_odds = [-under_odds[0]]
+    if not under_odds:
+        under_odds = [-over_odds[0]]
 
-        # Run the analysis
-        analysis = predictor.analyze_prop_bet(
-            input_data=example_input,
-            target=target,
-            model_type=model_type,
-            lines=lines,
-            over_odds=over_odds,
-            under_odds=under_odds,
-            use_pca=use_pca_flag
-        )
+    # Run the analysis
+    analysis = predictor.analyze_prop_bet(
+        input_data=example_input,
+        target=target,
+        model_type=model_type,
+        lines=lines,
+        over_odds=over_odds,
+        under_odds=under_odds,
+        use_pca=use_pca_flag
+    )
 
-        print(f"RESULTS for player: {group['full_name'].iloc[0]}")
+    # ------------------------------------------------------------------
+    #  For every value bet returned, add a record to the list
+    # ------------------------------------------------------------------
+    for bet in analysis['value_bets']:
+        value_bets_records.append({
+            'player_id': player_id,
+            'player_name': group['full_name'].iloc[0],
+            'stat_name': stat_name,              # walks | batter_strikeouts
+            'line': bet['line'],
+            'bet_side': bet['bet'],             # Over / Under
+            'prob': bet['prob'],
+            'odds': bet['odds'],
+            'ev': bet['ev'],
+            'point_pred': analysis['point_prediction']
+        })
 
-        if stat_name == 'walks':
-            print("\nWalks Analysis:")
-            print(
-                f"Point Prediction: {analysis['point_prediction']:.2f} walks")
+# ------------------------------------------------------------------
+#  Turn into DataFrame and sort by EV (descending)
+# ------------------------------------------------------------------
+value_bets_df = (
+    pd.DataFrame(value_bets_records)
+      .sort_values(by='ev', ascending=False)
+      .reset_index(drop=True)
+)
 
-            print("\nProbabilities:")
-            for result in analysis['results']:
-                print(
-                    f"Line {result['line']}: Over {result['prob_over']:.2f}, Under {result['prob_under']:.2f}")
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+filename = f"value_bets_{timestamp}.csv"
 
-            if analysis['value_bets']:
-                print("\nValue Bets:")
-                for bet in analysis['value_bets']:
-                    print(
-                        f"Bet: {bet['bet']} {bet['line']} Walks, Prob: {bet['prob']:.2f}, Odds: {bet['odds']}, EV: {bet['ev']:.2f}")
-            else:
-                print("\nNo value bets found")
-
-        else:
-            print("\nStrikeouts Analysis:")
-            print(
-                f"Point Prediction: {analysis['point_prediction']:.2f} strikeouts")
-
-            print("\nProbabilities:")
-            for result in analysis['results']:
-                print(
-                    f"Line {result['line']}: Over {result['prob_over']:.2f}, Under {result['prob_under']:.2f}")
-
-            if analysis['value_bets']:
-                print("\nValue Bets:")
-                for bet in analysis['value_bets']:
-                    print(
-                        f"Bet: {bet['bet']} {bet['line']} Strikeouts, Prob: {bet['prob']:.2f}, Odds: {bet['odds']}, EV: {bet['ev']:.2f}")
-            else:
-                print("\nNo value bets found")
+value_bets_df.to_csv(filename, index=False)
