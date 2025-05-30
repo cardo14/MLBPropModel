@@ -1,0 +1,25 @@
+2025-05-30 11:33:30,381 - INFO - Starting enhanced MLB database update
+2025-05-30 11:33:30,411 - INFO - Database connection successful
+2025-05-30 11:33:30,411 - INFO - Updating recent games...
+2025-05-30 11:33:30,417 - INFO - Database connection successful
+2025-05-30 11:33:30,419 - INFO - Updating games from 2025-06-13 to 2025-06-04
+2025-05-30 11:33:30,425 - INFO - Database connection successful
+2025-05-30 11:33:30,622 - ERROR - Error updating games: 400 Client Error: Bad Request for url: https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=2025-06-13&endDate=2025-06-04&gameType=R&hydrate=team%2Cvenue
+2025-05-30 11:33:30,622 - INFO - Updating recent player stats...
+2025-05-30 11:33:30,628 - INFO - Database connection successful
+2025-05-30 11:33:30,632 - INFO - Found 0 games needing stats
+2025-05-30 11:33:30,632 - INFO - Added 0 new stat records
+2025-05-30 11:33:30,632 - INFO - Enhanced update complete: 0 games, 0 stats
+2025-05-30 11:33:47,590 - INFO - Starting enhanced MLB database update
+2025-05-30 11:33:47,629 - INFO - Database connection successful
+2025-05-30 11:33:47,629 - INFO - Updating recent games...
+2025-05-30 11:33:47,636 - INFO - Database connection successful
+2025-05-30 11:33:47,640 - INFO - Updating games from 2025-06-13 to 2025-06-04
+2025-05-30 11:33:47,641 - INFO - Adjusted date range to: 2025-05-27 to 2025-05-30
+2025-05-30 11:33:47,648 - INFO - Database connection successful
+2025-05-30 11:33:48,149 - INFO - Successfully processed 50 games
+2025-05-30 11:33:48,149 - INFO - Updating recent player stats...
+2025-05-30 11:33:48,153 - INFO - Database connection successful
+2025-05-30 11:33:48,157 - INFO - Found 0 games needing stats
+2025-05-30 11:33:48,158 - INFO - Added 0 new stat records
+2025-05-30 11:33:48,158 - INFO - Enhanced update complete: 50 games, 0 stats
